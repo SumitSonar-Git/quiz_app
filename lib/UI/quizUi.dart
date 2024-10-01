@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:quiz_app/model/quesans_Model.dart';
 
-class quizUi extends StatefulWidget {
-  const quizUi({super.key});
+class QuizUi extends StatefulWidget {
+  const QuizUi({super.key});
 
   @override
-  State<quizUi> createState() => _quizUiState();
+  State<QuizUi> createState() => _QuizUiState();
 }
 
-class _quizUiState extends State<quizUi> {
+class _QuizUiState extends State<QuizUi> {
   List<Questions> quesansList = getQuesAns();
   int score = 0;
   int currentQuesIndex = 0;
   Answers? selectedAnswer;
   bool isLastQuestion = false;
-  int? selectedAnswerIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -95,13 +94,9 @@ class _quizUiState extends State<quizUi> {
                                           : Color(0xFF82B8FF),
                                     ),
                                     onPressed: () {
-                                      if (selectedAnswer == null) {
-                                        if (e.iscorrect) {
-                                          score++;
-                                        }
-                                      }
                                       setState(() {
-                                        selectedAnswer = e;
+                                        selectedAnswer =
+                                            e; // Set selected answer
                                       });
                                     },
                                     child: Text(
@@ -133,42 +128,6 @@ class _quizUiState extends State<quizUi> {
                     backgroundColor: Color(0xFF68AAFF),
                   ),
                   onPressed: () {
-                    if (selectedAnswer != null &&
-                        currentQuesIndex == quesansList.length - 1) {
-                      setState(() {
-                        isLastQuestion = true;
-                      });
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text("Quiz Completed"),
-                          content: Text(
-                            "You Scored $score/${getQuesAns().length}",
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                setState(() {
-                                  currentQuesIndex = 0;
-                                  score = 0;
-                                  isLastQuestion = false;
-                                  selectedAnswer = null;
-                                });
-                              },
-                              child: Text("Restart"),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                SystemNavigator.pop();
-                              },
-                              child: Text("Exit"),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
                     if (selectedAnswer == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
@@ -176,37 +135,72 @@ class _quizUiState extends State<quizUi> {
                           duration: Duration(seconds: 2), // SnackBar duration
                         ),
                       );
+                      return; // Exit the function if no answer is selected
+                    }
+
+                    // Update score and show feedback message before moving to the next question
+                    String feedbackMessage;
+                    if (selectedAnswer!.iscorrect) {
+                      score++;
+                      feedbackMessage = 'Correct Answer!';
                     } else {
-                      // Compare selected answer with the correct answer
-                      bool isCorrect = selectedAnswer!.iscorrect;
+                      feedbackMessage = 'Incorrect Answer!';
+                    }
 
-                      // Show feedback based on the correctness of the selected answer
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(isCorrect
-                              ? 'Answer was correct'
-                              : 'Answer was incorrect'),
-                          duration: Duration(seconds: 2), // SnackBar duration
-                        ),
-                      );
+                    // Show feedback using SnackBar
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(feedbackMessage),
+                        duration: Duration(seconds: 1), // SnackBar duration
+                      ),
+                    );
 
-                      // Update score if the answer is correct
-                      if (isCorrect) {
-                        score++;
-                      }
-
-                      // Move to the next question
-                      setState(() {
-                        if (currentQuesIndex < quesansList.length - 1) {
-                          currentQuesIndex++;
-                        }
+                    // Move to the next question or show completion dialog
+                    setState(() {
+                      if (currentQuesIndex < quesansList.length - 1) {
+                        currentQuesIndex++;
                         selectedAnswer =
                             null; // Reset selected answer for the next question
-                      });
-                    }
+                      } else {
+                        // If it's the last question, show the completion dialog
+                        isLastQuestion = true;
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: Text("Quiz Completed"),
+                            content: Text(
+                              "You Scored $score/${quesansList.length}",
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  setState(() {
+                                    currentQuesIndex = 0;
+                                    score = 0;
+                                    isLastQuestion = false;
+                                    selectedAnswer =
+                                        null; // Reset selected answer
+                                  });
+                                },
+                                child: Text("Restart"),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  SystemNavigator.pop();
+                                },
+                                child: Text("Exit"),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    });
                   },
                   child: Text(
-                    isLastQuestion ? 'Submit' : "Next",
+                    currentQuesIndex == quesansList.length - 1
+                        ? 'Submit'
+                        : "Next",
                     style: TextStyle(
                       color: Colors.black,
                       fontWeight: FontWeight.bold,

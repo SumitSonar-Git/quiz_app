@@ -112,7 +112,7 @@ class _homeUiState extends State<homeUi> {
 
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => quizUi(),
+                            builder: (context) => QuizUi(),
                           ),
                         );
                       },
